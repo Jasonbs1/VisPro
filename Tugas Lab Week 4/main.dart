@@ -1,83 +1,89 @@
-class Graph {
-  final List<List<int>> adjacencyMatrix;
-  final List<int> vertices;
-  List<bool> visited;
+import 'dart:math';
 
-  Graph(this.adjacencyMatrix, this.vertices)
-      : visited = List<bool>.filled(vertices.length, false);
+// Kelas Vertex yang merepresentasikan titik/simpul dalam graf
 
-  int findNearestUnvisited(int current) {
-    int nearest = -1;
-    int minDistance = double.infinity.toInt();
-    for (int i = 0; i < vertices.length; i++) {
-      if (!visited[i] && adjacencyMatrix[current][i] != 0) {
-        if (adjacencyMatrix[current][i] < minDistance) {
-          minDistance = adjacencyMatrix[current][i];
-          nearest = i;
-        }
-      }
+class Vertex {
+  final int id;
+  final double x; // Koordinat X
+  final double y; // Koordinat Y
+  // Konstruktor untuk inisialisasi Vertex dengan id, x, dan y
+  Vertex(this.id, this.x, this.y);
+  // Fungsi untuk menghitung jarak Euclidean ke vertex lain
+  double distanceTo(Vertex other) {
+    // sqrt((x2 - x1)^2 + (y2 - y1)^2) -> Jarak Euclidean
+    return sqrt(pow(x - other.x, 2) + pow(y - other.y, 2));
+  }
+  // Override toString untuk mencetak informasi vertex
+  @override
+  String toString() => 'Vertex $id at ($x, $y)';
+}
+ 
+// Fungsi untuk menyelesaikan masalah TSP dengan pendekatan greedy
+List<Vertex> tsp(List<Vertex> vertices) {
+  List<Vertex> visited = []; // List yang menyimpan vertex yang sudah dikunjungi
+  List<Vertex> unvisited = List.from(vertices); // Copy list semua vertex sebagai vertex yang belum dikunjungi
+
+  // Pilih vertex pertama sebagai starting point
+  Vertex current = unvisited.removeAt(0); // Hapus dari list unvisited
+  visited.add(current); // Tandai sebagai visited
+
+  print('Starting at: ${current.toString()}');
+
+  // Ulangi hingga semua vertex dikunjungi
+  while (unvisited.isNotEmpty) {
+    // Mencari vertex terdekat dari vertex yang sedang dikunjungi
+    Vertex nearest = findNearestVertex(current, unvisited);
+    
+    // Hubungkan ke vertex terdekat
+    print('Connecting ${current.toString()} to ${nearest.toString()}');
+    
+    visited.add(nearest); // Tandai vertex terdekat sebagai dikunjungi
+    unvisited.remove(nearest); // Hapus vertex dari daftar unvisited
+    current = nearest; // Update current vertex untuk iterasi berikutnya
+  }
+
+  return visited; // Mengembalikan jalur yang telah dikunjungi
+}
+
+// Fungsi untuk mencari vertex terdekat yang belum dikunjungi
+Vertex findNearestVertex(Vertex current, List<Vertex> unvisited) {
+  Vertex nearest = unvisited[0]; // Inisialisasi vertex terdekat dengan vertex pertama di list
+  double minDistance = current.distanceTo(nearest); // Hitung jarak ke vertex terdekat sementara
+
+  // Bandingkan jarak current ke semua vertex yang belum dikunjungi
+  for (var vertex in unvisited) {
+    double distance = current.distanceTo(vertex); // Hitung jarak
+    print('Distance from ${current.toString()} to ${vertex.toString()} is $distance');
+
+    // Jika ditemukan vertex dengan jarak lebih dekat, update nearest
+    if (distance < minDistance) {
+      nearest = vertex;
+      minDistance = distance;
+      print('Updated nearest to ${nearest.toString()} with distance $minDistance');
     }
-    return nearest;
   }
 
-  void traverseGraph() {
-    int current = 0;
-    markVisited(current); // Mark the starting vertex as visited
-    print('Starting at vertex: ${vertices[current]}');
-
-    while (!allVerticesVisited()) {
-      if (isLastVertex(current)) {
-        print('Reached the last vertex: ${vertices[current]}');
-
-        // Find the nearest unvisited vertex
-        int nearest = findNearestUnvisited(current);
-        if (nearest != -1) {
-          print('Connecting current vertex ${vertices[current]} to nearest unvisited vertex: ${vertices[nearest]}');
-          markVisited(nearest);
-          current = nearest; // Move to the nearest unvisited vertex
-        } else {
-          print('No unvisited vertex found. Stopping traversal.');  
-          break; // Stop traversal if no unvisited vertex is found
-        }
-      } else {
-        int next = goToNextVertex(current);
-        print('Moving to the next vertex: ${vertices[next]}');
-        current = next;
-        markVisited(current); // Mark the new current vertex as visited
-      }
-    }
-
-    print('All vertices have been visited.');
-  }
-
-  void markVisited(int index) {
-    visited[index] = true;
-    print('Marking vertex ${vertices[index]} as visited');
-  }
-
-  bool isLastVertex(int index) {
-    return index == vertices.length - 1;
-  }
-
-  int goToNextVertex(int current) {
-    return (current + 1) % vertices.length;
-  }
-
-  bool allVerticesVisited() {
-    return visited.every((v) => v);
-  }
+  return nearest; // Mengembalikan vertex terdekat
 }
 
 void main() {
-  List<int> vertices = [5, 3, 6, 2, 8];
-  List<List<int>> adjacencyMatrix = [
-    [0, 10, 15, 20, 25],
-    [10, 0, 35, 25, 30],
-    [15, 35, 0, 30, 10],
-    [20, 25, 30, 0, 50],
-    [25, 30, 10, 50, 0],
+  // Daftar vertex dengan koordinat (x, y)
+  List<Vertex> vertices = [
+    Vertex(0, 2, 3),  // Vertex 0
+    Vertex(1, 5, 5),  // Vertex 1
+    Vertex(2, 8, 8),  // Vertex 2
+    Vertex(3, 1, 1),  // Vertex 3
+    Vertex(4, 7, 2),  // Vertex 4
   ];
 
-  Graph graph = Graph(adjacencyMatrix, vertices);
-  graph.traverseGraph();
+  // Panggil fungsi tsp untuk menyelesaikan masalah TSP
+  List<Vertex> path = tsp(vertices);
+
+  // Cetak hasil akhir
+  print('Final visited path:');
+  for (var vertex in path) {
+    print(vertex);
+  }
 }
+
+
